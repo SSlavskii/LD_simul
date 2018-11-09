@@ -13,20 +13,26 @@ def get_haplotypes_freq(p_a, p_b, r):
     p_AB = 1 - p_ab - p_aB - p_Ab
 
     if p_Ab < 0 or p_aB < 0 or p_ab < 0 or p_AB < 0:
-        print("Wrong allele frequences for given r")
+        print("Wrong allele frequences for given r", p_a, p_b, r)
         return -1
 
     return [p_AB, p_Ab, p_aB, p_ab]
 
 
 def simulate_generation(hapl_freq, Ne):
-    elements = [1,2,3,4]
+    elements = [0, 1, 2, 3]
     np.random.seed()
     population = choice(elements,  2*Ne, p=hapl_freq)
     #counts = Counter(population) - works longer
     values, counts = np.unique(population, return_counts=True)
     dictionary = dict(zip(values, counts))
-    new_freq = [dictionary[i]/(2*Ne) for i in elements]
+    new_freq = [0, 0, 0, 0]
+    for i in elements:
+        try:
+            new_freq[i] = dictionary[i] / (2 * Ne)
+        except KeyError:
+            pass
+
     return new_freq
 
 
@@ -77,3 +83,19 @@ def get_simulation_results(r_ab0, p_a0, p_b0, Ne, generations, number_of_sim, n_
     print("{0} seconds to do {1} simulations".format(time.time() - start_time, number_of_sim))
     output = pd.concat(result_list)
     return output
+
+
+def max_p_b(p_a, r, precision=5):
+    if r == 0:
+        return 1
+    p_b = p_a / (p_a * (1 - r ** 2) + r ** 2)
+    p_b = np.floor(p_b * 10 ** precision) / 10 ** precision
+    return p_b
+
+
+def min_p_b(p_a, r, precision=5):
+    if r == 0:
+        return 0
+    p_b = p_a * r ** 2 / (1 - p_a * (1 - r ** 2))
+    p_b = np.ceil(p_b * 10 ** precision) / 10 ** precision
+    return p_b
